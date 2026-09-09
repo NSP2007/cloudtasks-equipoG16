@@ -1,9 +1,9 @@
 :root {
-  --primary: #4f46e5;
-  --primary-dark: #4338ca;
+  --primary: #80203d;
+  --primary-dark: #6a0221;
   --primary-light: #eef2ff;
   --text: #1f2937;
-  --text-muted: #6b7280;
+  --text-muted: #6a0221;
   --border: #e5e7eb;
   --bg: #f9fafb;
   --card-bg: #ffffff;
@@ -19,9 +19,12 @@
 
 body {
   font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background: var(--bg);
+  background: radial-gradient(circle, rgba(244, 163, 167, 0.8), #fbfafa);
+  /* background: radial-gradient(circle,rgba(217, 69, 114, 1) 0%, rgba(237, 166, 186, 1) 31%, rgba(255, 255, 255, 1) 100%); */
+  /* background: linear-gradient(#fbfafa, rgba(244, 163, 167, 0.8));*/
+  /*background: var(--bg);
   color: var(--text);
-  margin: 0;
+  margin: 0;*/
   min-height: 100vh;
 }
 
