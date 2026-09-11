@@ -455,6 +455,30 @@ main {
   padding: 2rem 0;
 }
 
+
+.app-header {
+  display: flex;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border);
+}
+
+#header {
+  margin-left: 40px;
+}
+
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.header-link {
+  text-decoration: none;
+  color: var(--primary);
+}
+
 @media (max-width: 480px) {
   .app-header {
     flex-direction: column;
