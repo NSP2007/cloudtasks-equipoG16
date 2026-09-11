@@ -232,6 +232,14 @@ main {
   border-color: var(--primary);
 }
 
+.view-tab[data-view="personal"]:hover {
+  background-color: var(--primary-dark);
+}
+
+.view-tab[data-view="equipo"]:hover {
+  background-color: rgb(242, 231, 231);
+}
+
 .panel {
   background: var(--card-bg);
   border: 1px solid var(--border);
@@ -496,7 +504,7 @@ main {
 }
 
 .section-link:hover {
-  opacity: 0.7;
+  filter: blur(2px);
 }
 
 .section-link.active-section {
