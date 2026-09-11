@@ -22,6 +22,9 @@ const userDisplay = document.getElementById("user-display");
 const logoutBtn = document.getElementById("logout-btn");
 
 const viewTabs = document.querySelectorAll(".view-tab");
+const myTasksLink = document.getElementById("my-tasks-link");
+const doneLink = document.getElementById("done-link");
+const section3Link = document.getElementById("section-3-link");
 const teamsPanel = document.getElementById("teams-panel");
 const teamSelect = document.getElementById("team-select");
 const newTeamBtn = document.getElementById("new-team-btn");
@@ -45,8 +48,10 @@ const emptyState = document.getElementById("empty-state");
 const taskMessage = document.getElementById("task-message");
 
 // ---------- Estado local ----------
+
 let currentUser = null;
 let currentView = "personal"; // "personal" | "equipo"
+let currentSection = "my-tasks"; // "my-tasks" | "done"
 let myTeams = [];
 let currentTeamId = null;
 
@@ -265,12 +270,76 @@ inviteForm.addEventListener("submit", async (event) => {
 
 viewTabs.forEach((tab) => {
   tab.addEventListener("click", async () => {
+
     viewTabs.forEach((t) => t.classList.remove("active"));
     tab.classList.add("active");
+
     currentView = tab.dataset.view;
-    teamsPanel.classList.toggle("hidden", currentView !== "equipo");
+
+    // Si seleccionamos Mis tareas
+    if (currentView === "personal") {
+      currentSection = "my-tasks";
+
+      myTasksLink.classList.add("active-section");
+      doneLink.classList.remove("active-section");
+
+      teamsPanel.classList.add("hidden");
+    }
+
+    // Si seleccionamos Tareas de equipo
+    else {
+      currentSection = "team";
+
+      myTasksLink.classList.remove("active-section");
+      doneLink.classList.remove("active-section");
+
+      teamsPanel.classList.remove("hidden");
+    }
+
     await renderTasks();
   });
+});
+
+// =========================================================
+// NAVEGACIÓN PRINCIPAL
+// =========================================================
+
+function setActiveSection(section) {
+  currentSection = section;
+
+  // Cambiar apariencia de los enlaces
+  myTasksLink.classList.toggle("active-section", section === "my-tasks");
+  doneLink.classList.toggle("active-section", section === "done");
+
+  // My tasks y Done trabajan con tareas personales
+  currentView = "personal";
+
+  // Ocultar panel de equipos
+  teamsPanel.classList.add("hidden");
+
+  // Activar visualmente "Mis tareas"
+  viewTabs.forEach((tab) => {
+    tab.classList.toggle(
+        "active",
+        tab.dataset.view === "personal"
+    );
+  });
+
+  renderTasks();
+}
+
+
+myTasksLink.addEventListener("click", async (event) => {
+  event.preventDefault();
+
+  setActiveSection("my-tasks");
+});
+
+
+doneLink.addEventListener("click", async (event) => {
+  event.preventDefault();
+
+  setActiveSection("done");
 });
 
 // =========================================================
@@ -284,22 +353,57 @@ datesToggle.addEventListener("click", () => {
 });
 
 async function getTasks() {
-  let query = supabaseClient.from("tasks").select("*").order("created_at", { ascending: false });
+  let query = supabaseClient
+      .from("tasks")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-  if (currentView === "personal") {
-    query = query.eq("task_type", "personal").eq("owner_id", currentUser.id);
-  } else {
+  // ==========================================
+  // MY TASKS
+  // Solo tareas personales ACTIVAS
+  // ==========================================
+  if (currentSection === "my-tasks") {
+    query = query
+        .eq("task_type", "personal")
+        .eq("owner_id", currentUser.id)
+        .eq("completed", false);
+  }
+
+      // ==========================================
+      // DONE
+      // Solo tareas personales COMPLETADAS
+  // ==========================================
+  else if (currentSection === "done") {
+    query = query
+        .eq("task_type", "personal")
+        .eq("owner_id", currentUser.id)
+        .eq("completed", true);
+  }
+
+      // ==========================================
+      // TAREAS DE EQUIPO
+  // ==========================================
+  else if (currentView === "equipo") {
     if (!currentTeamId) return [];
-    query = query.eq("task_type", "equipo").eq("team_id", currentTeamId);
+
+    query = query
+        .eq("task_type", "equipo")
+        .eq("team_id", currentTeamId);
   }
 
   const { data, error } = await query;
+
   if (error) {
     console.error("Error al obtener tareas:", error);
-    setMessage(taskMessage, "No se pudieron cargar las tareas: " + error.message, "error");
+    setMessage(
+        taskMessage,
+        "No se pudieron cargar las tareas: " + error.message,
+        "error"
+    );
     return [];
   }
-  return data;
+
+  return data || [];
 }
 
 async function createTask(task) {
