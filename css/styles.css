@@ -461,9 +461,38 @@ main {
   align-items: center;
   padding: 1rem 1.5rem;
   background: var(--card-bg);
-  border-bottom: 1px solid var(--border);
+  border-bottom: none;
+  box-shadow: var(--shadow);
 }
 
+
+#sections-nav-bar {
+  background-color: #ffffff;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.8rem 1.2rem;
+
+  /* Alineación a la izquierda y separación sutil del título */
+  width: fit-content;        /* Se adapta al ancho de los enlaces para que no ocupe toda la pantalla */
+  margin-top: 0.5rem;        /* Pega más el rectángulo hacia la parte de arriba */
+  margin-left: 5px;         /* Ajusta este valor según qué tan a la izquierda/derecha lo quieras */
+
+  box-shadow: var(--shadow);
+}
+
+.sections-links,
+.section-nav {
+  display: flex;
+  align-items: center;
+  gap: 50px;                 /* Mantiene la gran separación que pediste entre ellos */
+}
+
+.section-link {
+  text-decoration: none;
+  color: var(--primary);
+  font-weight: 500;
+}
 #header {
   margin-left: 40px;
 }
