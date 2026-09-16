@@ -24,7 +24,7 @@ const logoutBtn = document.getElementById("logout-btn");
 const viewTabs = document.querySelectorAll(".view-tab");
 const myTasksLink = document.getElementById("my-tasks-link");
 const doneLink = document.getElementById("done-link");
-const section3Link = document.getElementById("section-3-link");
+const deletedLink = document.getElementById("deleted-link");
 const teamsPanel = document.getElementById("teams-panel");
 const teamSelect = document.getElementById("team-select");
 const newTeamBtn = document.getElementById("new-team-btn");
@@ -95,9 +95,9 @@ registerForm.addEventListener("submit", async (event) => {
   }
 
   setMessage(
-    registerMessage,
-    "Cuenta creada. Revisa tu correo para confirmar el registro e inicia sesión.",
-    "success"
+      registerMessage,
+      "Cuenta creada. Revisa tu correo para confirmar el registro e inicia sesión.",
+      "success"
   );
   registerForm.reset();
 });
@@ -142,10 +142,10 @@ async function showApp() {
   appSection.classList.remove("hidden");
 
   const { data: profile } = await supabaseClient
-    .from("profiles")
-    .select("username, email")
-    .eq("id", currentUser.id)
-    .single();
+      .from("profiles")
+      .select("username, email")
+      .eq("id", currentUser.id)
+      .single();
 
   userDisplay.textContent = profile ? `👤 ${profile.username}` : currentUser.email;
 
@@ -159,17 +159,17 @@ async function showApp() {
 
 async function loadTeams() {
   const { data: memberships, error } = await supabaseClient
-    .from("team_members")
-    .select("team_id, teams(id, name)")
-    .eq("user_id", currentUser.id);
+      .from("team_members")
+      .select("team_id, teams(id, name)")
+      .eq("user_id", currentUser.id);
 
   if (error) {
     console.error("Error al cargar equipos:", error);
     myTeams = [];
   } else {
     myTeams = (memberships || [])
-      .map((m) => m.teams)
-      .filter(Boolean);
+        .map((m) => m.teams)
+        .filter(Boolean);
   }
 
   teamSelect.innerHTML = "";
@@ -212,10 +212,10 @@ newTeamForm.addEventListener("submit", async (event) => {
   if (!name) return;
 
   const { data: team, error } = await supabaseClient
-    .from("teams")
-    .insert([{ name, owner_id: currentUser.id }])
-    .select()
-    .single();
+      .from("teams")
+      .insert([{ name, owner_id: currentUser.id }])
+      .select()
+      .single();
 
   if (error) {
     setMessage(teamMessage, "No se pudo crear el equipo: " + error.message, "error");
@@ -241,10 +241,10 @@ inviteForm.addEventListener("submit", async (event) => {
   if (!currentTeamId || !email) return;
 
   const { data: profile, error: profileError } = await supabaseClient
-    .from("profiles")
-    .select("id, username")
-    .eq("email", email)
-    .maybeSingle();
+      .from("profiles")
+      .select("id, username")
+      .eq("email", email)
+      .maybeSingle();
 
   if (profileError || !profile) {
     setMessage(teamMessage, "No se encontró un usuario registrado con ese correo.", "error");
@@ -252,8 +252,8 @@ inviteForm.addEventListener("submit", async (event) => {
   }
 
   const { error } = await supabaseClient
-    .from("team_members")
-    .insert([{ team_id: currentTeamId, user_id: profile.id }]);
+      .from("team_members")
+      .insert([{ team_id: currentTeamId, user_id: profile.id }]);
 
   if (error) {
     setMessage(teamMessage, "No se pudo agregar al integrante: " + error.message, "error");
@@ -270,31 +270,11 @@ inviteForm.addEventListener("submit", async (event) => {
 
 viewTabs.forEach((tab) => {
   tab.addEventListener("click", async () => {
-
     viewTabs.forEach((t) => t.classList.remove("active"));
     tab.classList.add("active");
 
     currentView = tab.dataset.view;
-
-    // Si seleccionamos Mis tareas
-    if (currentView === "personal") {
-      currentSection = "my-tasks";
-
-      myTasksLink.classList.add("active-section");
-      doneLink.classList.remove("active-section");
-
-      teamsPanel.classList.add("hidden");
-    }
-
-    // Si seleccionamos Tareas de equipo
-    else {
-      currentSection = "team";
-
-      myTasksLink.classList.remove("active-section");
-      doneLink.classList.remove("active-section");
-
-      teamsPanel.classList.remove("hidden");
-    }
+    teamsPanel.classList.toggle("hidden", currentView !== "equipo");
 
     await renderTasks();
   });
@@ -307,27 +287,12 @@ viewTabs.forEach((tab) => {
 function setActiveSection(section) {
   currentSection = section;
 
-  // Cambiar apariencia de los enlaces
   myTasksLink.classList.toggle("active-section", section === "my-tasks");
   doneLink.classList.toggle("active-section", section === "done");
-
-  // My tasks y Done trabajan con tareas personales
-  currentView = "personal";
-
-  // Ocultar panel de equipos
-  teamsPanel.classList.add("hidden");
-
-  // Activar visualmente "Mis tareas"
-  viewTabs.forEach((tab) => {
-    tab.classList.toggle(
-        "active",
-        tab.dataset.view === "personal"
-    );
-  });
+  deletedLink.classList.toggle("active-section", section === "deleted");
 
   renderTasks();
 }
-
 
 myTasksLink.addEventListener("click", async (event) => {
   event.preventDefault();
@@ -340,6 +305,11 @@ doneLink.addEventListener("click", async (event) => {
   event.preventDefault();
 
   setActiveSection("done");
+});
+
+deletedLink.addEventListener("click", async (event) => {
+  event.preventDefault();
+  setActiveSection("deleted");
 });
 
 // =========================================================
@@ -358,37 +328,19 @@ async function getTasks() {
       .select("*")
       .order("created_at", { ascending: false });
 
-  // ==========================================
-  // MY TASKS
-  // Solo tareas personales ACTIVAS
-  // ==========================================
-  if (currentSection === "my-tasks") {
-    query = query
-        .eq("task_type", "personal")
-        .eq("owner_id", currentUser.id)
-        .eq("completed", false);
-  }
-
-      // ==========================================
-      // DONE
-      // Solo tareas personales COMPLETADAS
-  // ==========================================
-  else if (currentSection === "done") {
-    query = query
-        .eq("task_type", "personal")
-        .eq("owner_id", currentUser.id)
-        .eq("completed", true);
-  }
-
-      // ==========================================
-      // TAREAS DE EQUIPO
-  // ==========================================
-  else if (currentView === "equipo") {
+  if (currentView === "equipo") {
     if (!currentTeamId) return [];
+    query = query.eq("task_type", "equipo").eq("team_id", currentTeamId);
+  } else {
+    query = query.eq("task_type", "personal").eq("owner_id", currentUser.id);
+  }
 
-    query = query
-        .eq("task_type", "equipo")
-        .eq("team_id", currentTeamId);
+  if (currentSection === "my-tasks") {
+    query = query.eq("completed", false).eq("deleted", false);
+  } else if (currentSection === "done") {
+    query = query.eq("completed", true).eq("deleted", false);
+  } else if (currentSection === "deleted") {
+    query = query.eq("deleted", true);
   }
 
   const { data, error } = await query;
@@ -421,7 +373,7 @@ async function toggleTaskCompleted(id, completed) {
 }
 
 async function deleteTask(id) {
-  await supabaseClient.from("tasks").delete().eq("id", id);
+  await supabaseClient.from("tasks").update({ deleted: true }).eq("id", id);
   await renderTasks();
 }
 
